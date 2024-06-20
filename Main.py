@@ -3,12 +3,13 @@ import threading
 import ssl
 import dns.resolver
 import logging
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
 # Server hostname
-SERVER_HOSTNAME = 'your_server_hostname'
+SERVER_HOSTNAME = 'https://prepared-tonya-testers001-ac5f43f4.koyeb.app/'
 
 # Create a socket object
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,32 +37,30 @@ server_socket.listen(1)
 
 print("Server started. Waiting for connections...")
 
-while True:
-    try:
-        # Accept an incoming connection
-        client_socket, address = server_socket.accept()
-        logging.info("Connected by %s", address)
+class MyRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Hello, World!")
 
-        # Create a new thread to handle the client
-        client_thread = threading.Thread(target=handle_client, args=(client_socket,))
-        client_thread.start()
-    except socket.error as e:
-        logging.error("Failed to accept incoming connection: %s", e)
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        self.wfile.write(b"Hello, World!")
 
-def handle_client(client_socket):
-    try:
-        while True:
-            # Receive a message from the client
-            message = client_socket.recv(1024)
-            logging.info("Received message: %s", message.decode())
+def run_server():
+    server_address = ('', 80)
+    httpd = HTTPServer(server_address, MyRequestHandler)
+    print("Starting httpd...")
+    httpd.serve_forever()
 
-            # Send a response back to the client
-            response = input("Enter your response: ")
-            client_socket.send(response.encode())
-    except socket.error as e:
-        logging.error("Failed to receive message from client: %s", e)
-    finally:
-        client_socket.close()
+try:
+    # Run the server
+    run_server()
+except socket.error as e:
+    logging.error("Failed to run server: %s", e)
 
 try:
     # Close the server socket
